@@ -32,6 +32,13 @@ RSpec.describe HasDraft do
     it "drafts every column except keys and timestamps" do
       expect(Article.draft_columns).to contain_exactly("title", "summary", "body", "post_date")
     end
+
+    it "doesn't need the database until the draft columns are used" do
+      stub_const("Widget", Class.new(ActiveRecord::Base))
+
+      expect { Widget.has_draft }.not_to raise_error
+      expect { Widget.draft_columns }.to raise_error(ActiveRecord::StatementInvalid)
+    end
   end
 
   describe "#instantiate_draft!" do
@@ -223,7 +230,22 @@ RSpec.describe HasDraft do
     end
 
     it "evaluates the block in the draft class" do
-      expect(Page::Copy.new).to be_copy
+      page.instantiate_draft!
+      page.draft.approve!
+
+      expect(page.draft.reload).to be_approved
+    end
+
+    it "leaves columns that only exist on the draft table alone" do
+      expect(Page.draft_columns).to contain_exactly("title", "body")
+
+      page.instantiate_draft!
+      page.draft.update!(approved: true, title: "Draft")
+      page.replace_with_draft!
+      page.update!(title: "Edited")
+      page.save_to_draft
+
+      expect(page.draft.reload).to be_approved
     end
   end
 end

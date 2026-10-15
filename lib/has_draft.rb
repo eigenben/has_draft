@@ -12,7 +12,7 @@ module HasDraft
       return if self.included_modules.include?(HasDraft::InstanceMethods)
       include HasDraft::InstanceMethods
 
-      class_attribute :draft_class_name, :draft_foreign_key, :draft_table_name, :draft_columns, :instance_writer => false
+      class_attribute :draft_class_name, :draft_foreign_key, :draft_table_name, :instance_writer => false
 
       # Default parent association
       options[:belongs_to] = self.name.demodulize.underscore.to_sym if options[:belongs_to].nil?
@@ -47,9 +47,12 @@ module HasDraft
 
       # Block extension
       draft_class.class_eval(&block) if block_given?
+    end
 
-      # Finally setup which columns to draft
-      self.draft_columns = draft_class.new.attributes.keys - [draft_class.primary_key, draft_foreign_key, 'created_at', 'updated_at', inheritance_column]
+    # Columns copied between the live record and its draft: those the two share, minus keys and
+    # timestamps. Computed on first use so defining the model doesn't need a database connection.
+    def draft_columns
+      @draft_columns ||= (draft_class.attribute_types.keys & attribute_types.keys) - [draft_class.primary_key, draft_foreign_key, 'created_at', 'updated_at', inheritance_column]
     end
 
     def draft_class

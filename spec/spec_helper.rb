@@ -22,8 +22,8 @@ end
 
 class Page < ActiveRecord::Base
   has_draft class_name: "Copy", foreign_key: :live_page_id, table_name: "page_copies" do
-    def copy?
-      true
+    def approve!
+      update!(approved: true)
     end
   end
 end
