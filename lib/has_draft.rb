@@ -14,12 +14,12 @@ module HasDraft
 
       class_attribute :draft_class_name, :draft_foreign_key, :draft_table_name, :draft_columns, :instance_writer => false
 
-      self.draft_class_name = options[:class_name]  || 'Draft'
-      self.draft_foreign_key = options[:foreign_key] || self.name.foreign_key
-      self.draft_table_name = options[:table_name]  || "#{table_name_prefix}#{base_class.name.demodulize.underscore}_drafts#{table_name_suffix}"
-
       # Default parent association
       options[:belongs_to] = self.name.demodulize.underscore.to_sym if options[:belongs_to].nil?
+
+      self.draft_class_name = options[:class_name]  || 'Draft'
+      self.draft_foreign_key = (options[:foreign_key] || "#{options[:belongs_to]}_id").to_s
+      self.draft_table_name = options[:table_name]  || "#{table_name_prefix}#{base_class.name.demodulize.underscore}_drafts#{table_name_suffix}"
 
       # Create Relationship to Draft Copy
       class_eval do
