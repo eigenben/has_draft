@@ -245,6 +245,39 @@ RSpec.describe HasDraft do
     end
   end
 
+  describe "the README's single table inheritance example" do
+    let(:blue) { BlueElement.create!(title: "Blue") }
+    let(:unknown) { UnknownElement.create!(title: "Unknown") }
+
+    before do
+      blue.instantiate_draft!
+      unknown.instantiate_draft!
+    end
+
+    it "stores every subclass's drafts in the base draft table" do
+      expect(Element::Draft.table_name).to eq("element_drafts")
+      expect(Element::Draft.all.map(&:class)).to contain_exactly(BlueElement::Draft, UnknownElement::Draft)
+    end
+
+    it "shares the parent association across draft classes" do
+      expect(Element.find(blue.id).draft.element).to eq(blue)
+      expect(Element.find(unknown.id).draft.element).to eq(unknown)
+    end
+
+    it "uses each draft class's behavior" do
+      expect(blue.draft.icon_path).to eq("images/blue.png")
+      expect(unknown.draft.icon_path).to eq("images/default.png")
+    end
+
+    it "keeps the live record's type when replacing it with the draft" do
+      blue.draft.update!(title: "New blue")
+      blue.replace_with_draft!
+
+      expect(Element.find(blue.id)).to be_a(BlueElement)
+      expect(blue.reload.title).to eq("New blue")
+    end
+  end
+
   describe ":class_name, :foreign_key and :table_name options" do
     let(:page) { Page.create!(title: "Live") }
 
