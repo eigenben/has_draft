@@ -20,6 +20,27 @@ class BlogPost < Post
   has_draft extends: Post, belongs_to: :post
 end
 
+# The single table inheritance example from the README
+class Element < ActiveRecord::Base
+  class Draft < ActiveRecord::Base
+    def icon_path
+      "images/default.png"
+    end
+  end
+end
+
+class BlueElement < Element
+  has_draft belongs_to: :element, extends: Element::Draft do
+    def icon_path
+      "images/blue.png"
+    end
+  end
+end
+
+class UnknownElement < Element
+  has_draft belongs_to: :element, extends: Element::Draft
+end
+
 class Page < ActiveRecord::Base
   has_draft class_name: "Copy", foreign_key: :live_page_id, table_name: "page_copies" do
     def approve!
