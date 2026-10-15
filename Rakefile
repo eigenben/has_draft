@@ -1,30 +1,6 @@
-require 'rubygems'
-require 'bundler/setup'
+require "bundler/gem_tasks"
+require "rspec/core/rake_task"
 
-require 'rake'
-require 'rspec/core/rake_task'
-require 'appraisal'
+RSpec::Core::RakeTask.new(:spec)
 
-Bundler::GemHelper.install_tasks
-
-desc 'Default: run unit tests.'
-task :default => [:clean, :all]
-
-desc "Run Specs against all Appraisals"
-task :all => :spec do
-  Rake::Task["appraisal:install"].execute
-  system("bundle exec rake -s appraisal spec")
-end
-
-desc "Run Specs"
-RSpec::Core::RakeTask.new(:spec) do |t|
-end
-
-task :test => :spec
-
-desc "Clean up files."
-task :clean do |t|
-  FileUtils.rm_rf "tmp"
-  Dir.glob("spec/db/*.sqlite3").each {|f| FileUtils.rm f }
-  Dir.glob("has_draft-*.gem").each {|f| FileUtils.rm f }
-end
+task default: :spec

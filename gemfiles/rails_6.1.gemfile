@@ -1,0 +1,14 @@
+source "https://rubygems.org"
+
+gemspec path: ".."
+
+gem "activerecord", "~> 6.1.0"
+gem "sqlite3", "~> 1.4"
+gem "rake"
+gem "rspec", "~> 3.13"
+
+# Rails 6.1 predates these leaving Ruby's default gems
+gem "base64"
+gem "bigdecimal"
+gem "drb"
+gem "mutex_m"

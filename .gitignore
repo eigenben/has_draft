@@ -1,7 +1,6 @@
-*.sqlite3
-*.sqlite
-*.log
 *.gem
-Manifest
-pkg
-*.bundle
+*.log
+.bundle/
+pkg/
+Gemfile.lock
+gemfiles/*.lock

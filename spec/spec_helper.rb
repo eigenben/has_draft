@@ -1,34 +1,41 @@
-require "rubygems"
-require "rspec"
-require "factory_girl"
-require "faker"
+require "logger" # Rails < 7.1 expects Logger to be loaded already
 require "active_record"
-require "active_support"
+require "has_draft"
 
-# Establish DB Connection
-config = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'db', 'database.yml')))
-ActiveRecord::Base.configurations = {'test' => config[ENV['DB'] || 'sqlite3']}
-ActiveRecord::Base.establish_connection(ActiveRecord::Base.configurations['test'])
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+ActiveRecord::Schema.verbose = false
+load File.expand_path("db/schema.rb", __dir__)
 
-# Load Test Schema into the Database
-load(File.dirname(__FILE__) + "/db/schema.rb")
-
-require File.dirname(__FILE__) + '/../init'
-
-# Example has_draft Model:
 class Article < ActiveRecord::Base
+  validates :title, presence: true
+
   has_draft
 end
 
-# Empty class to test ability of Draft class to extend other classes
+# Plain base class for testing the :extends and :belongs_to options
 class Post < ActiveRecord::Base
-
 end
 
-# Model for testing ability to have the draft extend a different class
 class BlogPost < Post
-  has_draft :extends => Post, :belongs_to => :post
+  has_draft extends: Post, belongs_to: :post
 end
 
-# Load Factories:
-Dir[File.join(File.dirname(__FILE__), "factories/**/*.rb")].each {|f| require f}
+class Page < ActiveRecord::Base
+  has_draft class_name: "Copy", foreign_key: :live_page_id, table_name: "page_copies" do
+    def copy?
+      true
+    end
+  end
+end
+
+RSpec.configure do |config|
+  config.disable_monkey_patching!
+  config.order = :random
+
+  config.around do |example|
+    ActiveRecord::Base.transaction do
+      example.run
+      raise ActiveRecord::Rollback
+    end
+  end
+end
