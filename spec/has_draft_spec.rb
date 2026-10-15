@@ -65,6 +65,38 @@ RSpec.describe HasDraft do
     end
   end
 
+  describe "#instantiate_draft" do
+    it "builds the draft without saving it" do
+      article = create_article
+      draft = article.instantiate_draft
+
+      expect(draft).to be_new_record
+      expect(draft.title).to eq("Live title")
+    end
+  end
+
+  describe "on a new record" do
+    let(:article) { Article.new(title: "New title") }
+
+    it "builds the draft with #instantiate_draft! and saves it along with the record" do
+      article.instantiate_draft!
+
+      expect(article).to be_new_record
+      expect(article.draft).to be_new_record
+      expect(Article.count).to eq(0)
+
+      article.save!
+
+      expect(article.draft).to be_persisted
+      expect(article.reload.draft.title).to eq("New title")
+    end
+
+    it "raises from #save_to_draft without saving anything" do
+      expect { article.save_to_draft }.to raise_error(ActiveRecord::RecordNotSaved)
+      expect(Article.count).to eq(0)
+    end
+  end
+
   describe "#has_draft?" do
     it "is false without a draft" do
       expect(create_article).not_to have_draft

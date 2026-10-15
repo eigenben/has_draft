@@ -66,26 +66,28 @@ module HasDraft
     end
 
     def save_to_draft(perform_validation = true)
+      raise ActiveRecord::RecordNotSaved.new("Can't save a draft of a new record; save the record first", self) if self.new_record?
       return false if perform_validation and !self.valid?
 
-      instantiate_draft! unless has_draft?
-      copy_attributes_to_draft
+      has_draft? ? copy_attributes_to_draft : instantiate_draft
 
       return false unless self.draft.save(:validate => perform_validation)
       self.reload
     end
 
+    # Builds a draft copy of the record without saving it.
     def instantiate_draft
       self.build_draft
 
       copy_attributes_to_draft
       before_instantiate_draft
 
-      self.draft.tap(&:save)
+      self.draft
     end
 
+    # Builds and saves a draft copy of the record. On a new record, the draft is saved along with it.
     def instantiate_draft!
-      instantiate_draft do |draft|
+      instantiate_draft.tap do |draft|
         draft.save unless self.new_record?
       end
     end
