@@ -23,7 +23,10 @@ ActiveRecord::Schema.define do
 
   [:pages, :page_copies].each do |table_name|
     create_table table_name, force: true do |t|
-      t.references :live_page if table_name == :page_copies
+      if table_name == :page_copies
+        t.references :live_page
+        t.boolean :approved, default: false, null: false
+      end
 
       t.string :title
       t.text :body
